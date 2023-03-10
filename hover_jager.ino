@@ -1,21 +1,24 @@
 //HOVER JÄGER
 
 
-
 //SOCKET SERVER
 //DEFININDO REDE WIFI
 #include <ESP8266WiFi.h>
 #include <ArduinoJson.h>
-#define SSID "brisa-2511595"
-#define PASSWD "v4mdefk8"
+#define SSID "SEU SSID"
+#define PASSWD "SENHA DO SSID"
 #define SOCK_PORT 5000
 WiFiServer sockServer(SOCK_PORT);
 //armazenar resultado dos dados
 String argument;
 DynamicJsonDocument doc(2048);
+//PORTAS DA ESP8266, ALTERAR CASO HAJA MUDANÇA NO HARDWARE
+char ports[] = "{\"D0\": 16, \"D1\": 5, \"D2\": 4, \"D3\": 0, \"D4\": 2, \"D5\": 14, \"D6\": 12, \"D7\": 13, \"D8\": 15, \"A0\": 17}";
+DynamicJsonDocument ports_map(1024);
 void setup(){
     Serial.begin(115200);
     delay(1000);
+    deserializeJson(ports_map, ports);
     WiFi.begin(SSID,PASSWD);
     while (WiFi.status() != WL_CONNECTED){delay(100);}
     Serial.print("IP: ");
@@ -40,32 +43,51 @@ void loop(){
             char char_array[str_len];
             // Copy it over 
             argument.toCharArray(char_array, str_len);
-            Serial.println("argument :");
             deserializeJson(doc, argument);
             String pino = doc["port"];
             String io = doc["io"];
             String value = doc["value"];
-            //construido para pinos digitais...
-            if (String(io) == "INPUT"){
+            String type = doc["type"];
+            //Escolhendo tipo de pino
+            if (String(type) == "DIGITAL"){
+              Serial.println("Tipo digital escolhido");
+              if (String(io) == "INPUT"){
               //transformar valor do pino para char de alguma maneira e armazenar em value
-              int pin_go = pino.toInt();
+              int pin_go = ports_map[pino];
               pinMode(pin_go,INPUT);
-              digitalWrite(pin_go,LOW);
+              digitalRead(pin_go);
             }
             else {
-              int pin_go = pino.toInt();
+              int pin_go = ports_map[pino];
               pinMode(pin_go,OUTPUT);
               int valor = value.toInt();
-              if (valor == 0){
-                digitalWrite(pin_go,LOW);
-              }
-              else{
-                digitalWrite(pin_go,HIGH);
+                if (valor == 0){
+                  digitalWrite(pin_go,LOW);
+                }
+                else{
+                  digitalWrite(pin_go,HIGH);
+                }
+            }
+            }
+            //CASO SEJA ANALÓGICO
+            else if (String(type) == "ANALOG") {
+              Serial.println("Tipo analógico escolhido");
+              if (String(io) == "INPUT"){
+                //transformar valor do pino para char de alguma maneira e armazenar em value
+                int pin_go = ports_map[pino];
+                pinMode(pin_go,INPUT);
+                analogRead(pin_go);
+                                        }
+            else {
+              int pin_go = ports_map[pino];
+              pinMode(pin_go,OUTPUT);
+              int valor = value.toInt();
+               
+              analogWrite(pin_go,valor);
               }
             }
+            
             //construir para pinos analógicos
-            Serial.println("pino: ");
-            Serial.println(pino);
             delay(1000);
           
         }
