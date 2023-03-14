@@ -1,0 +1,1 @@
+##capaz de programar rotinas automatizadas via app para o robô
