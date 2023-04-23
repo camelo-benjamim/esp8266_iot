@@ -1,1 +1,0 @@
-## constroi análise de dados com base nos resultados fornecidos
